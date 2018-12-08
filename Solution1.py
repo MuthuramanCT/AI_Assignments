@@ -2,6 +2,8 @@ import sys
 import numpy as np
 import math
 
+mincost = math.inf
+
 
 def pad_with(vector, pad_width, iaxis, kwargs):
     pad_value = kwargs.get('padder', 10)
@@ -10,52 +12,55 @@ def pad_with(vector, pad_width, iaxis, kwargs):
     return vector
 
 
-def cost(dict):
+def cost(dict, AddCost):
     list = dict.copy()
     for i in dict.keys():
         #print(i, list)
         if i == 'RU' or i == 'LU' or i == 'LD' or i == 'RD':
-            if -100 and 0 not in list[i]:
-                list[i].append(10)
+            if -100 not in list[i] and 0 not in list[i]:
+                list[i].append(10+AddCost)
             else:
                 list[i].append(math.inf)
         elif i == 'U' or i == 'D':
-            if -100 and 0 not in list[i]:
-                list[i].append(6)
+            if -100 not in list[i] and 0 not in list[i]:
+                list[i].append(6+AddCost)
             else:
                 list[i].append(math.inf)
         elif i == 'L' or i == 'R':
-            if -100 and 0 not in list[i]:
-                list[i].append(5)
+            if -100 not in list[i] and 0 not in list[i]:
+                list[i].append(5+AddCost)
             else:
                 list[i].append(math.inf)
     return list
 
 
-def neighbor_dict(A, i, j):
-    # dict = {}
-    # i, j = np.argwhere(A == value)[0]
+def neighbor_dict(A, value, AddCost):
+    i, j = np.argwhere(A == value)[0]
     neighbor_list = {'LU': [A[i-1, j-1]], 'U': [A[i-1, j]], 'RU': [A[i-1, j+1]], 'L': [A[i, j-1]], 'R': [A[i, j+1]], 'LD': [A[i+1, j-1]], 'D': [A[i+1, j]], 'RD': [A[i+1, j+1]]}
-    # dict.update({A[i, j]: neighbor_list})
-    neighbor_list = cost(neighbor_list)
+    neighbor_list = cost(neighbor_list, AddCost)
+    dict = neighbor_list.copy()
+    for key, value in neighbor_list.items():
+        if math.inf in value or -1 in value:
+            del dict[key]
+    neighbor_list = dict.copy()
     return neighbor_list
 
 
 def search(mask, cost, path):
-    i, j = np.argwhere(mask == -1)[0]
-    neighbor = neighbor_dict(mask, i, j)
+    global mincost
+    # i, j = np.argwhere(mask == -1)[0]
+    neighbor = neighbor_dict(mask, -1, cost)
     print(neighbor)
-    for k in neighbor.keys():
-        #print(k)
-        path.append(k)
-        #print(path)
-        cost += neighbor[k][1]
-        #print(cost)
-        #print(neighbor[k][0])
-        x, y = np.argwhere(mask == (neighbor[k])[0])[0]
-        mask[i, j] = mask[x, y]
-        mask[x, y] = -1
-        search(mask, cost, path)
+    while(1):
+        for key, value in neighbor.items():
+            if -2 in value:
+                mincost = neighbor[key][1]
+                return
+        for k in neighbor.keys():
+            print(neighbor[k])
+            dict = neighbor_dict(mask, (neighbor[k])[0], neighbor[k][1])
+            neighbor[k] = dict
+        print(neighbor)
 
 
 def solve_task1(input_matrix):
