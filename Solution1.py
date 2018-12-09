@@ -4,6 +4,46 @@ import math
 
 mincost = math.inf
 
+class Graph(object):
+
+    def __init__(self, graph_dict):
+        self.__graph_dict = graph_dict
+
+    def find_path(self, start_vertex, end_vertex, path=None):
+        if path == None:
+            path = []
+        graph = self.__graph_dict
+        path = path + [start_vertex]
+        if start_vertex == end_vertex:
+            return path
+        if start_vertex not in graph:
+            return None
+        for vertex in graph[start_vertex]:
+            if vertex not in path:
+                extended_path = self.find_path(vertex,
+                                               end_vertex,
+                                               path)
+                if extended_path:
+                    return extended_path
+        return None
+
+    def find_all_paths(self, start_vertex, end_vertex, path=[]):
+        graph = self.__graph_dict
+        path = path + [start_vertex]
+        if start_vertex == end_vertex:
+            return [path]
+        if start_vertex not in graph:
+            return []
+        paths = []
+        for vertex in graph[start_vertex]:
+            if vertex not in path:
+                extended_paths = self.find_all_paths(vertex,
+                                                     end_vertex,
+                                                     path)
+                for p in extended_paths:
+                    paths.append(p)
+        return paths
+
 
 def pad_with(vector, pad_width, iaxis, kwargs):
     pad_value = kwargs.get('padder', 10)
@@ -12,55 +52,40 @@ def pad_with(vector, pad_width, iaxis, kwargs):
     return vector
 
 
-def cost(dict, AddCost):
-    list = dict.copy()
-    for i in dict.keys():
-        #print(i, list)
-        if i == 'RU' or i == 'LU' or i == 'LD' or i == 'RD':
-            if -100 not in list[i] and 0 not in list[i]:
-                list[i].append(10+AddCost)
-            else:
-                list[i].append(math.inf)
-        elif i == 'U' or i == 'D':
-            if -100 not in list[i] and 0 not in list[i]:
-                list[i].append(6+AddCost)
-            else:
-                list[i].append(math.inf)
-        elif i == 'L' or i == 'R':
-            if -100 not in list[i] and 0 not in list[i]:
-                list[i].append(5+AddCost)
-            else:
-                list[i].append(math.inf)
-    return list
-
-
-def neighbor_dict(A, value, AddCost):
-    i, j = np.argwhere(A == value)[0]
-    neighbor_list = {'LU': [A[i-1, j-1]], 'U': [A[i-1, j]], 'RU': [A[i-1, j+1]], 'L': [A[i, j-1]], 'R': [A[i, j+1]], 'LD': [A[i+1, j-1]], 'D': [A[i+1, j]], 'RD': [A[i+1, j+1]]}
-    neighbor_list = cost(neighbor_list, AddCost)
-    dict = neighbor_list.copy()
-    for key, value in neighbor_list.items():
-        if math.inf in value or -1 in value:
-            del dict[key]
-    neighbor_list = dict.copy()
+def neighbor_dict(A, i, j):
+    neighbor_list = [A[i, j-1], A[i, j+1],
+                     A[i-1, j-1], A[i-1, j], A[i-1, j+1],
+                     A[i+1, j-1], A[i+1, j], A[i+1, j+1]]
+    list = neighbor_list.copy()
+    for value in neighbor_list:
+        if value == -100 or value == 0:
+            list.remove(value)
+    neighbor_list = list.copy()
     return neighbor_list
 
 
-def search(mask, cost, path):
-    global mincost
-    # i, j = np.argwhere(mask == -1)[0]
-    neighbor = neighbor_dict(mask, -1, cost)
-    print(neighbor)
-    while(1):
-        for key, value in neighbor.items():
-            if -2 in value:
-                mincost = neighbor[key][1]
-                return
-        for k in neighbor.keys():
-            print(neighbor[k])
-            dict = neighbor_dict(mask, (neighbor[k])[0], neighbor[k][1])
-            neighbor[k] = dict
-        print(neighbor)
+def optimize_dict(graph_dict):
+    temp_dict = graph_dict.copy()
+    for key, value in graph_dict.items():
+        if not value:
+            del temp_dict[key]
+    graph_dict = temp_dict.copy()
+    return graph_dict
+
+
+def generate_neighbor(A):
+    graph_dict = {}
+    for i in range(0,A.shape[0]):
+        for j in range(0,A.shape[1]):
+            #print(A[i][j])
+            if A[i][j] != 0 and A[i][j] != -100:
+                #print(neighbor_dict(A, i, j))
+                graph_dict[A[i][j]] = neighbor_dict(A, i, j)
+    graph_dict = optimize_dict(graph_dict)
+    graph = Graph(graph_dict)
+    print(graph.find_path(-1, -2, []))
+    print(graph.find_all_paths(-1, -2, []))
+    print("I'm done")
 
 
 def solve_task1(input_matrix):
@@ -75,7 +100,7 @@ def solve_task1(input_matrix):
     mask[A == '*'] = -100
     mask[A == 'X'] = -2
     mask[A == 'R'] = -1
-    search(mask, 0, [])
+    generate_neighbor(mask)
     return 1
 
 # Use as many helper functions as you like
