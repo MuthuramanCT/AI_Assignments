@@ -45,6 +45,24 @@ class Graph(object):
                     paths.append(p)
         return paths
 
+    def __generate_edges__(self, mask):
+        edges = {}
+        for vertex in self.__graph_dict:
+            for neighbour in self.__graph_dict[vertex]:
+                if [vertex, neighbour] not in edges.items():
+                    i, j = np.argwhere(mask == neighbour)[0]
+                    i1, j1 = np.argwhere(mask == vertex)[0]
+                    if i1 != i and j1 != j:
+                        cost = 10
+                    elif i1 == i and j1 != j:
+                        cost = 5
+                    elif i1 != i and j1 == j:
+                        cost = 6
+                    else:
+                        cost = 0
+                    edges[vertex, neighbour] = cost
+        return edges
+
 
 def pad_with(vector, pad_width, iaxis, kwargs):
     pad_value = kwargs.get('padder', 10)
@@ -84,8 +102,8 @@ def generate_neighbor(A):
                 graph_dict[A[i][j]] = neighbor_dict(A, i, j)
     graph_dict = optimize_dict(graph_dict)
     graph = Graph(graph_dict)
+    print(graph.__generate_edges__(A))
     print(graph.find_path(-1, -2, []))
-    print(graph.find_all_paths(-1, -2, []))
     print("I'm done")
 
 
