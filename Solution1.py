@@ -36,7 +36,6 @@ class Graph(object):
                     cost = 0
                 if (vertex, neighbour, cost) not in self.edges:
                     self.edges.append((vertex, neighbour, cost))
-        #print(self.edges)
 
     def dijkstra(self, f, t):
         g = defaultdict(list)
@@ -62,42 +61,6 @@ class Graph(object):
                         heappush(q, (next, v2, path))
 
         return "No path found!"
-
-    def find_path(self, start_vertex, end_vertex, path=None):
-        graph = self.__graph_dict
-        path = path + [start_vertex]
-        if start_vertex == end_vertex:
-            return path
-        if start_vertex not in graph:
-            return None
-        for vertex in graph[start_vertex]:
-            if vertex not in path:
-                extended_path = self.find_path(vertex,
-                                               end_vertex,
-                                               path)
-                if extended_path:
-                    return extended_path
-        return None
-
-    def find_all_paths(self, start_vertex, end_vertex, path=[]):
-        graph = self.__graph_dict
-        path = path + [start_vertex]
-        if start_vertex == end_vertex:
-            return [path]
-        if start_vertex not in graph:
-            return []
-        paths = []
-        for vertex in graph[start_vertex]:
-            if vertex not in path:
-                self.f = open("output.txt", "a+")
-                self.f.write(str(path) + '\n')
-                self.f.close()
-                extended_paths = self.find_all_paths(vertex,
-                                                     end_vertex,
-                                                     path)
-                for p in extended_paths:
-                    paths.append(p)
-        return paths
 
 
 def pad_with(vector, pad_width, iaxis, kwargs):
@@ -144,7 +107,6 @@ def solve_task1(input_matrix):
     # Enter your code here.
     # Return the minimum cost or return No path found!
     graph = Graph(input_matrix)
-    #print(graph.dijkstra(-1, -2))
     return graph.dijkstra(-1, -2)
 
 
