@@ -7,12 +7,35 @@ mincost = math.inf
 
 class Graph(object):
 
-    def __init__(self, graph_dict):
-        self.__graph_dict = graph_dict
+    def __init__(self, input_matrix):
+        self.f = open("output.txt", "w+")
+        A = np.matrix(input_matrix)
+        A = np.pad(A, 1, pad_with, padder=0)
+        mask = np.zeros(A.shape, dtype=np.int)
+        mask[A == '_'] = 1
+        num_traverse_cells = np.sum(mask) + 1
+        mask[mask == 1] = np.asarray(range(1, num_traverse_cells))
+        mask[A == '*'] = -100
+        mask[A == 'X'] = -2
+        mask[A == 'R'] = -1
+        self.__graph_dict = generate_neighbor(mask)
+        self.edges = {}
+        for vertex in self.__graph_dict:
+            for neighbour in self.__graph_dict[vertex]:
+                if [vertex, neighbour] not in self.edges.items():
+                    i, j = np.argwhere(mask == neighbour)[0]
+                    i1, j1 = np.argwhere(mask == vertex)[0]
+                    if i1 != i and j1 != j:
+                        cost = 10
+                    elif i1 == i and j1 != j:
+                        cost = 5
+                    elif i1 != i and j1 == j:
+                        cost = 6
+                    else:
+                        cost = 0
+                    self.edges[vertex, neighbour] = cost
 
     def find_path(self, start_vertex, end_vertex, path=None):
-        if path == None:
-            path = []
         graph = self.__graph_dict
         path = path + [start_vertex]
         if start_vertex == end_vertex:
@@ -38,30 +61,15 @@ class Graph(object):
         paths = []
         for vertex in graph[start_vertex]:
             if vertex not in path:
+                self.f = open("output.txt", "a+")
+                self.f.write(str(path) + '\n')
+                self.f.close()
                 extended_paths = self.find_all_paths(vertex,
                                                      end_vertex,
                                                      path)
                 for p in extended_paths:
                     paths.append(p)
         return paths
-
-    def __generate_edges__(self, mask):
-        edges = {}
-        for vertex in self.__graph_dict:
-            for neighbour in self.__graph_dict[vertex]:
-                if [vertex, neighbour] not in edges.items():
-                    i, j = np.argwhere(mask == neighbour)[0]
-                    i1, j1 = np.argwhere(mask == vertex)[0]
-                    if i1 != i and j1 != j:
-                        cost = 10
-                    elif i1 == i and j1 != j:
-                        cost = 5
-                    elif i1 != i and j1 == j:
-                        cost = 6
-                    else:
-                        cost = 0
-                    edges[vertex, neighbour] = cost
-        return edges
 
 
 def pad_with(vector, pad_width, iaxis, kwargs):
@@ -101,25 +109,14 @@ def generate_neighbor(A):
                 # print(neighbor_dict(A, i, j))
                 graph_dict[A[i][j]] = neighbor_dict(A, i, j)
     graph_dict = optimize_dict(graph_dict)
-    graph = Graph(graph_dict)
-    print(graph.__generate_edges__(A))
-    print(graph.find_path(-1, -2, []))
-    print("I'm done")
+    return graph_dict
 
 
 def solve_task1(input_matrix):
     # Enter your code here.
     # Return the minimum cost or return No path found!
-    A = np.matrix(input_matrix)
-    A = np.pad(A, 1, pad_with, padder=0)
-    mask = np.zeros(A.shape, dtype=np.int)
-    mask[A == '_'] = 1
-    num_traverse_cells = np.sum(mask) + 1
-    mask[mask == 1] = np.asarray(range(1, num_traverse_cells))
-    mask[A == '*'] = -100
-    mask[A == 'X'] = -2
-    mask[A == 'R'] = -1
-    generate_neighbor(mask)
+    graph = Graph(input_matrix)
+    print(graph.find_all_paths(-1, -2, []))
     return 1
 
 
