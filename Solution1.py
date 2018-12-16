@@ -1,6 +1,8 @@
 import sys
 import numpy as np
 import math
+from collections import defaultdict
+from heapq import *
 
 mincost = math.inf
 
@@ -19,21 +21,47 @@ class Graph(object):
         mask[A == 'X'] = -2
         mask[A == 'R'] = -1
         self.__graph_dict = generate_neighbor(mask)
-        self.edges = {}
+        self.edges = []
         for vertex in self.__graph_dict:
             for neighbour in self.__graph_dict[vertex]:
-                if [vertex, neighbour] not in self.edges.items():
-                    i, j = np.argwhere(mask == neighbour)[0]
-                    i1, j1 = np.argwhere(mask == vertex)[0]
-                    if i1 != i and j1 != j:
-                        cost = 10
-                    elif i1 == i and j1 != j:
-                        cost = 5
-                    elif i1 != i and j1 == j:
-                        cost = 6
-                    else:
-                        cost = 0
-                    self.edges[vertex, neighbour] = cost
+                i, j = np.argwhere(mask == neighbour)[0]
+                i1, j1 = np.argwhere(mask == vertex)[0]
+                if i1 != i and j1 != j:
+                    cost = 10
+                elif i1 == i and j1 != j:
+                    cost = 5
+                elif i1 != i and j1 == j:
+                    cost = 6
+                else:
+                    cost = 0
+                if (vertex, neighbour, cost) not in self.edges:
+                    self.edges.append((vertex, neighbour, cost))
+        #print(self.edges)
+
+    def dijkstra(self, f, t):
+        g = defaultdict(list)
+        for l, r, c in self.edges:
+            g[l].append((c, r))
+
+        q, seen, mins = [(0, f, ())], set(), {f: 0}
+        while q:
+            (cost, v1, path) = heappop(q)
+            if v1 not in seen:
+                seen.add(v1)
+                path = (v1, path)
+                if v1 == t:
+                    return cost
+
+                for c, v2 in g.get(v1, ()):
+                    if v2 in seen:
+                        continue
+                    prev = mins.get(v2, None)
+                    next = cost + c
+                    if prev is None or next < prev:
+                        mins[v2] = next
+                        heappush(q, (next, v2, path))
+
+        return "No path found!"
 
     def find_path(self, start_vertex, end_vertex, path=None):
         graph = self.__graph_dict
@@ -116,8 +144,8 @@ def solve_task1(input_matrix):
     # Enter your code here.
     # Return the minimum cost or return No path found!
     graph = Graph(input_matrix)
-    print(graph.find_all_paths(-1, -2, []))
-    return 1
+    #print(graph.dijkstra(-1, -2))
+    return graph.dijkstra(-1, -2)
 
 
 # Use as many helper functions as you like
