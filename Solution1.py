@@ -1,16 +1,12 @@
 import sys
 import numpy as np
-import math
 from collections import defaultdict
 from heapq import *
-
-mincost = math.inf
 
 
 class Graph(object):
 
     def __init__(self, input_matrix):
-        self.f = open("output.txt", "w+")
         A = np.matrix(input_matrix)
         A = np.pad(A, 1, pad_with, padder=0)
         mask = np.zeros(A.shape, dtype=np.int)
