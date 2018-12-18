@@ -14,29 +14,9 @@ class Graph(object):
         self.mask[A == 'X'] = 0
         self.__graph_dict = generate_neighbor(self.mask)
         self.__value_on_edge = self.value_on_edge()
-        print(self.mask)
-
-    def find_path(self, start_vertex, end_vertex, path=None):
-        if path == None:
-            path = []
-        graph = self.__graph_dict
-        path = path + [start_vertex]
-        if start_vertex == end_vertex:
-            return path
-        if start_vertex not in graph:
-            return 0
-        for vertex in graph[start_vertex]:
-            if vertex not in path:
-                print(path)
-                extended_path = self.find_path(vertex,
-                                               end_vertex,
-                                               path)
-                if extended_path:
-                    return extended_path
-        return 0
+        #print(self.mask)
 
     def value_on_edge(self):
-        print(self.mask.shape)
         L1 = list(self.mask[1, :])
         L2 = list(self.mask[:, self.mask.shape[1]-2])
         L3 = list(self.mask[self.mask.shape[0]-2, :])
@@ -47,28 +27,35 @@ class Graph(object):
             if value == 0:
                 temp.remove(value)
         L = temp.copy()
-        print(L)
         return L
 
+    def dfs(self, start, visited=None):
+        graph = self.__graph_dict
+        if visited is None:
+            visited = []
+        visited.append(start)
+        iterator = [n for n in graph[start] if n not in visited]
+        for next in iterator:
+            if next not in visited:
+                self.dfs(next, visited)
+        return visited
+
     def generate_output(self):
-        for i in range(0, self.mask.shape[0]):
-            for j in range(0, self.mask.shape[1]):
-                if self.mask[i, j] != 0 and self.mask[i, j] != -100:
-                    nopath = 0
-                    for value in self.__value_on_edge:
-                        path = self.find_path(self.mask[i, j], value)
-                        if path == 0:
-                            nopath = 1
-                            continue
-                        else:
-                            for item in path:
-                                m, n = np.argwhere(self.mask == item)[0]
-                                if item not in self.__value_on_edge:
-                                    self.mask[m, n] = -100
-                    if nopath == 1:
-                        self.mask[i, j] = 0
-                    self.__graph_dict = generate_neighbor(self.mask)
-        return self.mask
+        for value in self.__value_on_edge:
+            path = self.dfs(value)
+            #print(path)
+            for item in path:
+                m, n = np.argwhere(self.mask == item)[0]
+                if item not in self.__value_on_edge:
+                    self.mask[m, n] = -100
+            self.__graph_dict = generate_neighbor(self.mask)
+        for value in self.__value_on_edge:
+            self.mask[self.mask == value] = -100
+        output = np.empty(self.mask.shape, dtype=str)
+        output[self.mask >= 0] = 'X'
+        output[self.mask == -100] = '.'
+        output = output[1:self.mask.shape[0]-1,1:self.mask.shape[1]-1]
+        return output
 
 
 def pad_with(vector, pad_width, iaxis, kwargs):
@@ -80,8 +67,7 @@ def pad_with(vector, pad_width, iaxis, kwargs):
 
 def neighbor_dict(A, i, j):
     neighbor_list = [A[i, j - 1], A[i, j + 1],
-                     A[i - 1, j - 1], A[i - 1, j], A[i - 1, j + 1],
-                     A[i + 1, j - 1], A[i + 1, j], A[i + 1, j + 1]]
+                     A[i - 1, j],A[i + 1, j]]
     if all([i == 0 for i in neighbor_list]):
         A[i, j] = 0
     list = neighbor_list.copy()
@@ -110,7 +96,7 @@ def generate_neighbor(A):
                 # print(neighbor_dict(A, i, j))
                 graph_dict[A[i][j]] = neighbor_dict(A, i, j)
     graph_dict = optimize_dict(graph_dict)
-    print(graph_dict)
+    #print(graph_dict)
     return graph_dict
 
 
@@ -118,8 +104,8 @@ def solve_task2(input_matrix):
     # Enter your code here.
     A = np.matrix(input_matrix)
     graph = Graph(input_matrix)
-    graph.generate_output()
-    print(graph.mask)
+    A = graph.generate_output()
+    #print(graph.mask)
     return A
 
 # Use as many helper functions as you like

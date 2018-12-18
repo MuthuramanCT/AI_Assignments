@@ -33,18 +33,18 @@ class Graph(object):
                 if (vertex, neighbour, cost) not in self.edges:
                     self.edges.append((vertex, neighbour, cost))
 
-    def dijkstra(self, f, t):
+    def dijkstra(self, start, goal):
         g = defaultdict(list)
-        for l, r, c in self.edges:
-            g[l].append((c, r))
+        for vertex, neighbor, c in self.edges:
+            g[vertex].append((c, neighbor))
 
-        q, seen, mins = [(0, f, ())], set(), {f: 0}
+        q, seen, mins = [(0, start, ())], set(), {start: 0}
         while q:
             (cost, v1, path) = heappop(q)
             if v1 not in seen:
                 seen.add(v1)
                 path = (v1, path)
-                if v1 == t:
+                if v1 == goal:
                     return cost
 
                 for c, v2 in g.get(v1, ()):
@@ -55,7 +55,6 @@ class Graph(object):
                     if prev is None or next < prev:
                         mins[v2] = next
                         heappush(q, (next, v2, path))
-
         return "No path found!"
 
 
